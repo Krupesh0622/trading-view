@@ -7,3 +7,5 @@ MONGODB_URI=mongodb+srv://krupesh22:krupesh_22@cluster0.phaumwj.mongodb.net/tred
 
 **client folder env variables:**
 VITE_API_URL=http://localhost:3001
+
+ones start this application you see view on http://localhost:5173/ and server running on http://localhost:3001/ using one terminal
