@@ -1,5 +1,7 @@
 const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance();
+const yahooFinance = new YahooFinance({
+    suppressNotices: ['yahooSurvey']
+});
 const PriceData = require('../models/PriceData');
 
 const SYMBOL = '^NSEI'; // Nifty 50
@@ -31,34 +33,27 @@ class MarketService {
 
             console.log('letestHistory', letestHistory);
             if (letestHistory) {
-                const bulkOps = quotes.filter((quote) => {
-                    const quoteTimeS = new Date(quote.date).getTime() / 1000
+                const bulkAdd = quotes.reduce((acc, quote) => {
+                    const quoteTimeS = Math.floor(new Date(quote.date).getTime() / 1000);
                     if (!letestHistory || letestHistory?.time < quoteTimeS) {
-                        return {
-                            updateOne: {
-                                filter: { symbol, time: quoteTimeS },
-                                update: {
-                                    $set: {
-                                        symbol,
-                                        time: new Date(quote.date).getTime() / 1000,
-                                        open: quote.open,
-                                        high: quote.high,
-                                        low: quote.low,
-                                        close: quote.close,
-                                        volume: quote.volume
-                                    }
-                                },
-                                upsert: true
-                            }
-                        }
+                        const { open, high, low, close, volume } = quote;
+                        acc.push({
+                            symbol,
+                            time: quoteTimeS,
+                            open,
+                            high,
+                            low,
+                            close,
+                            volume
+                        });
                     }
-                });
+                    return acc;
+                }, []);
 
-                console.log('bulkOps', bulkOps);
-                if (bulkOps.length > 0) {
-                    console.log('bulkOps', bulkOps?.[0].updateOne.update["$set"]);
-                    await PriceData.bulkWrite(bulkOps);
-                    console.log(`Synced ${bulkOps.length} historical records.`);
+                console.log('bulkAdd.length', bulkAdd.length);
+                if (bulkAdd.length > 0) {
+                    await PriceData.insertMany(bulkAdd);
+                    console.log(`Synced ${bulkAdd.length} historical records.`);
                 }
             }
 
