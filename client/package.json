@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "axios": "^1.13.3",
     "lightweight-charts": "^4.2.3",
     "lucide-react": "^0.400.0",
     "nifty-trading-view-clone": "file:..",

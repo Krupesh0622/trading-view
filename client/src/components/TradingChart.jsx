@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createChart, ColorType, TickMarkType } from "lightweight-charts";
 import socket from "../services/socket";
+import { get } from "../services/api";
 
 const TradingChart = ({ onPriceUpdate }) => {
   const chartContainerRef = useRef();
@@ -103,17 +104,16 @@ const TradingChart = ({ onPriceUpdate }) => {
     window.addEventListener("resize", handleResize);
 
     // Fetch Historical Data
-    fetch("/api/history")
-      .then((res) => res.json())
-      .then((data) => {
+    get("/history")
+      .then(({ payload: data }) => {
         console.log("data", data);
-        const candleData = data
+        const candleData = data.history
           .filter(
             (d) =>
               d.open != null &&
               d.high != null &&
               d.low != null &&
-              d.close != null
+              d.close != null,
           )
           .map((d) => ({
             time: d.time,
@@ -123,14 +123,14 @@ const TradingChart = ({ onPriceUpdate }) => {
             close: d.close,
           }));
 
-        const volumeData = data
+        const volumeData = data.history
           .filter(
             (d) =>
               d.open != null &&
               d.high != null &&
               d.low != null &&
               d.close != null &&
-              d.volume != null
+              d.volume != null,
           )
           .map((d) => ({
             time: d.time,
@@ -149,7 +149,7 @@ const TradingChart = ({ onPriceUpdate }) => {
           const last = candleData[candleData.length - 1];
           onPriceUpdate(
             last.close,
-            candleData[candleData.length - 2]?.close || last.open
+            candleData[candleData.length - 2]?.close || last.open,
           );
         }
       })
@@ -179,7 +179,7 @@ const TradingChart = ({ onPriceUpdate }) => {
           candleSeries.update(updatedBar);
           onPriceUpdate(
             tick.price,
-            data[data.length - 2]?.close || lastBar.open
+            data[data.length - 2]?.close || lastBar.open,
           );
         } else if (tickBarTime > lastBar.time) {
           // Create NEW bar

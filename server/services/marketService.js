@@ -31,39 +31,40 @@ class MarketService {
             const letestHistory = await PriceData.findOne({ symbol })
                 .sort({ time: -1 });
 
-            console.log('letestHistory', letestHistory);
-            if (letestHistory) {
-                const bulkAdd = quotes.reduce((acc, quote) => {
-                    const quoteTimeS = Math.floor(new Date(quote.date).getTime() / 1000);
-                    if (!letestHistory || letestHistory?.time < quoteTimeS) {
-                        const { open, high, low, close, volume } = quote;
-                        acc.push({
-                            symbol,
-                            time: quoteTimeS,
-                            open,
-                            high,
-                            low,
-                            close,
-                            volume
-                        });
-                    }
-                    return acc;
-                }, []);
-
-                console.log('bulkAdd.length', bulkAdd.length);
-                if (bulkAdd.length > 0) {
-                    await PriceData.insertMany(bulkAdd);
-                    console.log(`Synced ${bulkAdd.length} historical records.`);
+            console.log('letestHistory--------', letestHistory);
+            const bulkAdd = quotes.reduce((acc, quote) => {
+                const quoteTimeS = Math.floor(new Date(quote.date).getTime() / 1000);
+                if (!letestHistory || letestHistory?.time < quoteTimeS) {
+                    const { open, high, low, close, volume } = quote;
+                    acc.push({
+                        symbol,
+                        time: quoteTimeS,
+                        open,
+                        high,
+                        low,
+                        close,
+                        volume
+                    });
                 }
-            }
+                return acc;
+            }, []);
 
+            console.log('bulkAdd.length', bulkAdd.length);
+            if (bulkAdd.length > 0) {
+                await PriceData.insertMany(bulkAdd);
+                console.log(`Synced ${bulkAdd.length} historical records.`);
+            }
         } catch (error) {
             console.error('Error syncing historical data:', error);
         }
     }
 
-    async getHistory() {
-        return await PriceData.find({ symbol: SYMBOL }).sort({ time: 1 }).lean();
+    async getHistory({ symbol, limit = 1000, skip = 0, sort = { time: 1 } }) {
+        return await PriceData.find({ symbol }).sort(sort).lean();
+    }
+
+    async getHistoryCount({ symbol }) {
+        return await PriceData.countDocuments({ symbol });
     }
 
     async getLatestPrice() {

@@ -7,11 +7,20 @@ const mongoose = require('mongoose');
 const marketService = require('./services/marketService');
 
 const app = express();
-app.use(cors());
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5001'];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+const SYMBOL = '^NSEI';
 
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: {
+        origin: allowedOrigins,
+        credentials: true
+    }
 });
 
 // Database Connection
@@ -32,22 +41,11 @@ mongoose.connect(MONGODB_URI || 'mongodb://localhost:27017/nifty-chart')
 // API
 app.get('/api/history', async (req, res) => {
     try {
-        const history = await marketService.getHistory();
-
-        const letestHistory = [history[history.length - 1]];
-        console.log('letestHistory', letestHistory);
-        // If history is empty (first run or db issue), try to generate/fetch immediate
-        const nowInSeconds = Math.floor(Date.now() / 1000); // current time in seconds
-        const oneMinuteAgo = nowInSeconds - 60;
-        if (letestHistory?.time >= oneMinuteAgo &&
-            letestHistory?.time <= nowInSeconds
-        ) {
-            console.log('No history in DB, fetching...');
-            await marketService.syncHistoricalData();
-            const freshHistory = await marketService.getHistory();
-            return res.json(freshHistory);
-        }
-        res.json(history);
+        await marketService.syncHistoricalData("1m", SYMBOL);
+        const history = await marketService.getHistory({ symbol: SYMBOL, limit: 1000, skip: 0, sort: { time: 1 } });
+        const historyCount = await marketService.getHistoryCount({ symbol: SYMBOL });
+        console.log('history', history.length, historyCount);
+        res.json({ history, historyCount });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -65,7 +63,7 @@ setInterval(async () => {
         io.emit('priceUpdate', tick);
         // We could also save this tick to DB as a new 1-minute candle if needed
     }
-}, 5000);
+}, 1000);
 
 const PORT = 3001;
 server.listen(PORT, '0.0.0.0', () => {
