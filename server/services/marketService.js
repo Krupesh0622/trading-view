@@ -9,7 +9,7 @@ const SYMBOL = '^NSEI'; // Nifty 50
 class MarketService {
     async initialize() {
         console.log('Initializing Market Service...');
-        await this.syncHistoricalData('1m');
+        await this.syncHistoricalData('1m', SYMBOL);
     }
 
     async syncHistoricalData(interval, symbol = '^NSEI') {
@@ -17,11 +17,11 @@ class MarketService {
             console.log(`Fetching 5-minute intraday data for ${symbol}...`);
 
             // Calculate date 7 days ago (Yahoo limit is ~7 days for 1m)
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - 7);
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() - 7);
 
             const queryOptions = {
-                period1: startDate.toISOString().split('T')[0],
+                period1: endDate.toISOString().split('T')[0],
                 interval
             };
 

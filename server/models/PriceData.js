@@ -17,3 +17,4 @@ const priceSchema = new mongoose.Schema({
 priceSchema.index({ symbol: 1, time: 1 }, { unique: true });
 
 module.exports = mongoose.model('PriceData', priceSchema);
+

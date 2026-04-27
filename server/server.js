@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const connectDB = require('./config/db');
 const marketService = require('./services/marketService');
 
 const app = express();
@@ -13,6 +13,7 @@ app.use(cors({
     origin: allowedOrigins,
     credentials: true
 }));
+
 const SYMBOL = '^NSEI';
 
 const server = http.createServer(app);
@@ -23,20 +24,8 @@ const io = new Server(server, {
     }
 });
 
-// Database Connection
-const MONGODB_URI = process.env.MONGODB_URI;
-
-// Check if URI is provided
-if (!MONGODB_URI) {
-    console.warn("WARNING: MONGODB_URI is likely missing from .env file!");
-}
-
-mongoose.connect(MONGODB_URI || 'mongodb://localhost:27017/nifty-chart')
-    .then(async () => {
-        console.log('Connected to MongoDB');
-        await marketService.initialize();
-    })
-    .catch(err => console.error('MongoDB connection error:', err));
+// Connect to Database
+connectDB();
 
 // API
 app.get('/api/history', async (req, res) => {
@@ -65,7 +54,6 @@ setInterval(async () => {
     }
 }, 1000);
 
-const PORT = 3001;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+server.listen(process.env.PORT || 3001, () => {
+    console.log(`Server running on port ${process.env.PORT || 3001}`);
 });

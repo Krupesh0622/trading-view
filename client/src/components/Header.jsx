@@ -2,10 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   ArrowUp,
   ArrowDown,
-  ChevronDown,
-  Monitor,
   Settings,
-  Camera,
   Maximize,
 } from "lucide-react";
 
